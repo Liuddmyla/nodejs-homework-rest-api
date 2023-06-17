@@ -1,91 +1,77 @@
-const fs = require("fs/promises");
-const path = require("path");
-// const uuid = require('uuid').v4;
 const Contact = require('./contactModel');
-
-const contactsPath = path.resolve(__dirname, "contacts.json");
-
-
-const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const { createUserDataValidator } = require('../utils/contactValidators');
+
 
 
 const listContacts = catchAsync(async (req, res) => {
-  const contacts = JSON.parse(await fs.readFile(contactsPath));
+
+  const contacts = await Contact.find();
  
   res.status(200).json(contacts);
 });
 
 
-const getContactById = catchAsync(async (req, res, next) => {
-  const { contactId } = req.params;
+const getContactById = catchAsync(async (req, res) => {
+  
+  const {contact} = req
 
-  const contacts = JSON.parse(await fs.readFile(contactsPath));
-
-  const contact = contacts.find((item) => item.id === contactId) || null;
-
-  if (!contact) {
-    res.status(404).json({"message": "Not found"});
-  }
- 
   res.status(200).json(contact);
 });
 
 
-const removeContact = catchAsync(async (req, res, next) => {
+const removeContact = catchAsync(async (req, res) => {
+
   const { contactId } = req.params;
   
-  const contacts = JSON.parse(await fs.readFile(contactsPath));
-
-  const handleId = contacts.some((item) => item.id === contactId);
-
-  if (!handleId) {
-    res.status(404).json({"message": "Not found"});
-  }
-
-  const newContacts = contacts.filter((item) => item.id !== contactId);
-
-  await fs.writeFile(contactsPath, JSON.stringify(newContacts));
+  await Contact.findByIdAndDelete(contactId);
 
   res.status(200).json({"message": "contact deleted"});
 });
 
 
-const addContact = catchAsync(async (req, res, next) => {
-  // const { error, value } = createUserDataValidator(req.body);
+const addContact = catchAsync(async (req, res) => { 
 
-  // if (error) return next(new AppError(400, {"message": "missing required name field"}));
-
-  const newContact = await Contact.create(req.body)
+  const newContact = await Contact.create(req.body);
 
   res.status(201).json(newContact);
 });
 
 
-const updateContact = catchAsync(async (req, res, next) => {
-  const { error, value } = createUserDataValidator(req.body);
-  const { contactId } = req.params;
+const updateContact = catchAsync(async (req, res) => {  
 
-  if (error) return next(new AppError(400, {"message": "missing fields"}));
+  const { contactId } = req.params;  
+  
+  const newContact = await Contact.findByIdAndUpdate(contactId, {
+    name: req.body.name,
+    email: req.body.email,
+    phone: req.body.phone,
+    favorite: req.body.favorite
+  }, {
+    new: true,
+  });
 
-  const contacts = JSON.parse(await fs.readFile(contactsPath));
+  res.status(200).json(newContact);
 
-  const index = contacts.findIndex((item) => item.id === contactId);
+});
 
-  if (index === -1) {
-    res.status(404).json({"message": "Not found"});
+const updateStatusContact = catchAsync(async (req, res) => {
+
+  const { contactId } = req.params;   
+
+  const newContact = await Contact.findByIdAndUpdate(contactId, {
+    favorite: req.body.favorite
+  }, {
+    new: true
+  });
+
+  if (!newContact) {
+    return res.status(400).json({"message": "missing field favorite"})
   }
 
-  contacts[index] = {
-    id: contactId,
-    ...value
-  }
-    
-  await fs.writeFile(contactsPath, JSON.stringify(contacts));  
+  res.status(200).json(newContact);
+  
 
-  res.status(200).json(contacts[index]);
-
+  
 });
 
 module.exports = {
@@ -94,4 +80,5 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  updateStatusContact
 }
