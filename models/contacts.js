@@ -44,8 +44,7 @@ const updateContact = catchAsync(async (req, res) => {
   const newContact = await Contact.findByIdAndUpdate(contactId, {
     name: req.body.name,
     email: req.body.email,
-    phone: req.body.phone,
-    favorite: req.body.favorite
+    phone: req.body.phone,    
   }, {
     new: true,
   });
@@ -56,21 +55,16 @@ const updateContact = catchAsync(async (req, res) => {
 
 const updateStatusContact = catchAsync(async (req, res) => {
 
-  const { contactId } = req.params;   
+  const { contactId } = req.params; 
+  const { favorite } = req.body;
 
-  const newContact = await Contact.findByIdAndUpdate(contactId, {
-    favorite: req.body.favorite
-  }, {
-    new: true
-  });
+  const newContact = await Contact.findByIdAndUpdate(contactId, {favorite}, { new: true });
 
   if (!newContact) {
     return res.status(400).json({"message": "missing field favorite"})
   }
 
   res.status(200).json(newContact);
-  
-
   
 });
 
