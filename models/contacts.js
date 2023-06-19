@@ -1,14 +1,72 @@
-// const fs = require('fs/promises')
+const Contact = require('./contactModel');
+const catchAsync = require('../utils/catchAsync');
 
-const listContacts = async () => {}
 
-const getContactById = async (contactId) => {}
 
-const removeContact = async (contactId) => {}
+const listContacts = catchAsync(async (req, res) => {
 
-const addContact = async (body) => {}
+  const contacts = await Contact.find();
+ 
+  res.status(200).json(contacts);
+});
 
-const updateContact = async (contactId, body) => {}
+
+const getContactById = catchAsync(async (req, res) => {
+  
+  const {contact} = req
+
+  res.status(200).json(contact);
+});
+
+
+const removeContact = catchAsync(async (req, res) => {
+
+  const { contactId } = req.params;
+  
+  await Contact.findByIdAndDelete(contactId);
+
+  res.status(200).json({"message": "contact deleted"});
+});
+
+
+const addContact = catchAsync(async (req, res) => { 
+
+  const newContact = await Contact.create(req.body);
+
+  res.status(201).json(newContact);
+});
+
+
+const updateContact = catchAsync(async (req, res) => {  
+
+  const { contactId } = req.params;  
+  
+  const newContact = await Contact.findByIdAndUpdate(contactId, {
+    name: req.body.name,
+    email: req.body.email,
+    phone: req.body.phone,    
+  }, {
+    new: true,
+  });
+
+  res.status(200).json(newContact);
+
+});
+
+const updateStatusContact = catchAsync(async (req, res) => {
+
+  const { contactId } = req.params; 
+  const { favorite } = req.body;
+
+  const newContact = await Contact.findByIdAndUpdate(contactId, {favorite}, { new: true });
+
+  if (!newContact) {
+    return res.status(400).json({"message": "missing field favorite"})
+  }
+
+  res.status(200).json(newContact);
+  
+});
 
 module.exports = {
   listContacts,
@@ -16,4 +74,5 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  updateStatusContact
 }
