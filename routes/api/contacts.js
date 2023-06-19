@@ -1,5 +1,5 @@
 const express = require('express');
-const { listContacts, getContactById, addContact, removeContact, updateContact, updateStatusContact } = require('../../models/contacts');
+const { listContacts, getContactById, addContact, removeContact, updateContact, updateStatusContact } = require('../../controllers/contacts');
 const { checkContactById, checkCreateContactData, checkUpdateContactData } = require('../../middlewares/contactMiddlewares');
 
 const router = express.Router()

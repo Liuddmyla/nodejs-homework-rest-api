@@ -1,6 +1,5 @@
-const Contact = require('./contactModel');
+const Contact = require('../models/contactModel');
 const catchAsync = require('../utils/catchAsync');
-
 
 
 const listContacts = catchAsync(async (req, res) => {
