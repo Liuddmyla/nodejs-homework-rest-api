@@ -4,8 +4,7 @@ const bcrypt = require('bcrypt');
 const userSchema = Schema({
   password: {
     type: String,
-    required: [true, 'Set password for user'],
-    select: false,
+    required: [true, 'Set password for user'],    
   },
   email: {
     type: String,
@@ -32,10 +31,6 @@ userSchema.pre('save', async function(next) {
 
   next();
 });
-
-// Custom method
-userSchema.methods.checkPassword = (candidate, hash) => bcrypt.compare(candidate, hash);
-
 
   
 const User = model('user', userSchema);

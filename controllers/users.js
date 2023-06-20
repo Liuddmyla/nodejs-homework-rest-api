@@ -1,18 +1,22 @@
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+
 
 const registerUser = catchAsync(async (req, res) => {
  
     const { email, password } = req.body;
     
     const user = await User.findOne({ email });
+
     if (user) {
         return res.status(409).json({"message": "Email in use"})
     }
 
     const result = await User.create({ email, password });
 
-    result.password = undefined;
+    user.password = undefined;
 
     res.status(201).json({
         user: result
@@ -21,6 +25,34 @@ const registerUser = catchAsync(async (req, res) => {
 });
 
 
+const loginUser = catchAsync(async (req, res) => {
+ 
+    const { email, password } = req.body;
+    
+    const user = await User.findOne({ email });
+
+    const match = await bcrypt.compare(password, user.password);    
+        
+    if (!user || !match) {
+        return res.status(401).json({"message": "Email or password is wrong"})
+    }
+
+    const payload = {
+        id: user._id
+    }
+
+    const token = jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: "1d" });
+
+    user.password = undefined;
+
+    res.status(200).json({
+        token,
+        user
+    });
+ 
+});
+
 module.exports = {
-  registerUser
+    registerUser,
+    loginUser
 }
