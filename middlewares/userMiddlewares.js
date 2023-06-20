@@ -18,27 +18,30 @@ exports.checkCreateUserData = catchAsync(async (req, res, next) => {
 });
 
 
-exports.auht = async (req, res, next) => {
+exports.auth = async (req, res, next) => {
 
   const { authorization = "" } = req.headers;
   const [bearer, token] = authorization.split(" ");
 
+  
+
   try {
     if (bearer !== "Bearer") {
       return next(new AppError(401, 'Not authorized'));
-  }
+    }
 
-  const { id } = jwt.verify(token, process.env.SECRET_KEY);   
+    const { id } = jwt.verify(token, process.env.SECRET_KEY);
   
-  const user = await User.findById(id);   
+    const user = await User.findById(id);
 
-  if (!user) {
+    if (!user || !user.token) {
     return next(new AppError(401, 'Not authorized'));
   }
 
   req.user = user;
 
   next();
+    
   } catch(error) {
     if (error.message === "invalid signature") {
     error.status = 401;

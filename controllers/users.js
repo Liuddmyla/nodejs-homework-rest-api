@@ -45,6 +45,8 @@ const loginUser = catchAsync(async (req, res) => {
 
     user.password = undefined;
 
+    await User.findByIdAndUpdate(user._id, { token });
+
     res.status(200).json({
         token,
         user
@@ -63,8 +65,20 @@ const currentUser = catchAsync(async (req, res) => {
  
 });
 
+
+const logoutUser = catchAsync(async (req, res) => {
+ 
+    const { _id } = req.user;
+
+    await User.findByIdAndUpdate(_id, { token: null });
+
+    res.status(204).json();
+ 
+});
+
 module.exports = {
     registerUser,
     loginUser,
-    currentUser
+    currentUser,
+    logoutUser
 }
