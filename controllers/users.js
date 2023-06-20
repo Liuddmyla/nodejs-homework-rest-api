@@ -1,7 +1,7 @@
-const User = require('../models/userModel');
-const catchAsync = require('../utils/catchAsync');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const User = require('../models/userModel');
+const catchAsync = require('../utils/catchAsync');
 
 
 const registerUser = catchAsync(async (req, res) => {
@@ -52,7 +52,19 @@ const loginUser = catchAsync(async (req, res) => {
  
 });
 
+
+const currentUser = catchAsync(async (req, res) => {
+ 
+    const { email, subscription } = req.user;
+
+    res.status(200).json({        
+        user:{email, subscription}
+    });
+ 
+});
+
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    currentUser
 }
