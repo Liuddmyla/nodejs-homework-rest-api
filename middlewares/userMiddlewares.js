@@ -1,10 +1,30 @@
 const jwt = require("jsonwebtoken");
+const multer = require('multer');
+const path = require('path');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { userDataValidator } = require('../utils/userValidators');
 const User = require('../models/userModel')
 
 
+const tmpDir = path.join(__dirname, "../", "tmp");
+
+const multerConfig = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, tmpDir)
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname)
+  },
+  limits: {
+    fileSize: 2048
+  }
+
+})
+
+exports.upload = multer({
+  storage: multerConfig
+});
 
 exports.checkCreateUserData = catchAsync(async (req, res, next) => {
 
