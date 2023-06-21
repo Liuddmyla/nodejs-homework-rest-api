@@ -1,11 +1,12 @@
-const Contact = require('./contactModel');
+const Contact = require('../models/contactModel');
 const catchAsync = require('../utils/catchAsync');
-
 
 
 const listContacts = catchAsync(async (req, res) => {
 
-  const contacts = await Contact.find();
+  const { _id } = req.user;
+
+  const contacts = await Contact.find({owner: _id});
  
   res.status(200).json(contacts);
 });
@@ -31,7 +32,9 @@ const removeContact = catchAsync(async (req, res) => {
 
 const addContact = catchAsync(async (req, res) => { 
 
-  const newContact = await Contact.create(req.body);
+  const { _id } = req.user;
+
+  const newContact = await Contact.create({...req.body, owner:_id});
 
   res.status(201).json(newContact);
 });
