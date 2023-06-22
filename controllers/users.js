@@ -4,8 +4,10 @@ const gravatar = require('gravatar');
 const path = require('path');
 const fs = require('fs/promises');
 const jimp = require('jimp');
+const uuid = require('uuid').v4;
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
+const { sendEmail } = require('../helpers/sendEmail');
 
 
 const registerUser = catchAsync(async (req, res) => {
@@ -20,8 +22,17 @@ const registerUser = catchAsync(async (req, res) => {
 
     const avatarURL = gravatar.url(email);
 
-    const result = await User.create({ email, password, avatarURL });
+    const verificationToken = uuid();
 
+    const result = await User.create({ email, password, avatarURL, verificationToken });
+
+    const mail = {
+        to: email,
+        subject: "Підтвердження реєстрації",
+        html:`<a href="http://localhost:3000/users/verify/${verificationToken}" target="_blank">Натисніть для підтвердження пошти</a>`
+    }
+
+    await sendEmail(mail);
     
     res.status(201).json({
         user: result
