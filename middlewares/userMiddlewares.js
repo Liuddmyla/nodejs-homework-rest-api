@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const { userDataValidator } = require('../utils/userValidators');
+const { userDataValidator, verifyEmailValidator } = require('../utils/userValidators');
 const User = require('../models/userModel')
 
 
@@ -70,3 +70,20 @@ exports.auth = async (req, res, next) => {
   }
   
 };
+
+
+
+exports.checkUserEmailData = catchAsync(async (req, res, next) => {
+
+  const { error, value } = verifyEmailValidator(req.body);
+
+  if (error) return next(new AppError(400, 'Invalid user data..'));
+
+  const userExists = await User.exists({ email: value.email });
+
+  if (userExists) return next(new AppError(400, 'User with this email already exists..'));
+
+  req.body = value;
+
+  next();
+});

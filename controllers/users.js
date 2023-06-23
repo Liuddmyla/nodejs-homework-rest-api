@@ -4,8 +4,10 @@ const gravatar = require('gravatar');
 const path = require('path');
 const fs = require('fs/promises');
 const jimp = require('jimp');
+const uuid = require('uuid').v4;
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
+const { sendEmail } = require('../helpers/sendEmail');
 
 
 const registerUser = catchAsync(async (req, res) => {
@@ -20,8 +22,17 @@ const registerUser = catchAsync(async (req, res) => {
 
     const avatarURL = gravatar.url(email);
 
-    const result = await User.create({ email, password, avatarURL });
+    const verificationToken = uuid();
 
+    const result = await User.create({ email, password, avatarURL, verificationToken });
+
+    const mail = {
+        to: email,
+        subject: "Підтвердження реєстрації",
+        html:`<a href="http://localhost:3000/users/verify/${verificationToken}" target="_blank">Натисніть для підтвердження пошти</a>`
+    }
+
+    await sendEmail(mail);
     
     res.status(201).json({
         user: result
@@ -40,6 +51,10 @@ const loginUser = catchAsync(async (req, res) => {
         
     if (!user || !match) {
         return res.status(401).json({"message": "Email or password is wrong"})
+    }
+
+    if (!user.verify) {
+        return res.status(401).json({ "message": "Email not verify" });
     }
 
     const payload = {
@@ -109,15 +124,63 @@ const updateAvatar = async (req, res) => {
         
         await fs.unlink(tempUpload);
         throw error;
- }
-   
- 
+ } 
 };
+
+const verifyEmail = catchAsync(async (req, res) => {
+ 
+    const { verificationToken } = req.params;
+
+    const user = await User.findOne({ verificationToken });
+
+    if (!user) {
+        return res.status(404).json({"message": "User not found"})
+    }
+
+    await User.findByIdAndUpdate(user._id, { verify: true, verificationToken: "" });
+
+    res.status(200).json({ "message": "Verification successful" });    
+ 
+});
+
+
+const resendVerifyEmail = catchAsync(async (req, res) => {
+ 
+    const { email } = req.body;
+    
+    const user = await User.findOne({ email });   
+
+    if (!email) {
+       return res.status(400).json({"message": "missing required field email"}) 
+    }
+
+    if (!user) {
+      return res.status(404).json({"message": "Not found"})  
+    }
+
+    if (user.verify) {
+        return res.status(400).json({"message": "Verification has already been passed"})  
+    }
+
+    const mail = {
+        to: email,
+        subject: "Підтвердження реєстрації",
+        html:`<a href="http://localhost:3000/users/verify/${user.verificationToken}" target="_blank">Натисніть для підтвердження пошти</a>`
+    }
+
+    await sendEmail(mail);
+
+    res.status(200).json({ "message": "Verification email sent" });
+ 
+});
+
 
 module.exports = {
     registerUser,
     loginUser,
     currentUser,
     logoutUser,
-    updateAvatar
+    updateAvatar,
+    verifyEmail,
+    resendVerifyEmail
 }
